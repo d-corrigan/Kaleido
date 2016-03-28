@@ -115,6 +115,7 @@ int main(){
 			 cout<< "Problem Loading Image" << endl;
 
 
+		bool even_block = false;
 		vector <Mat> blocks;
 
 		namedWindow( "small Image", WINDOW_AUTOSIZE );
@@ -142,7 +143,20 @@ int main(){
 					imshow("Image", maskImg); // visualization
 
 
-					waitKey(0); // visualization
+					if(even_block == true){
+						even_block =  false;
+
+						// HERE we can change the even blocks
+
+
+
+
+
+
+					}else{
+						even_block = true;
+					}
+					//waitKey(0); // visualization
 				}
 			}
 	   }else if(XYZ.cols % BLOCK_SIZE_Col != 0){
@@ -153,41 +167,7 @@ int main(){
 		exit(1);
 	   }
 
-		 /// Do the operation new_image(i,j) = alpha*image(i,j) + beta
-		 for( int y = 0; y < XYZ.rows; y++ ){
-			 for( int x = 0; x < XYZ.cols; x++ ){
-				 for( int c = 0; c < 3; c++ ){
-
-					 int new_delta;
-
-					 if ((int)XYZ.at<Vec3b>(y,x)[c] + delta >255 || (int)XYZ.at<Vec3b>(y,x)[c] - delta < 0){
-
-						 if((int)XYZ.at<Vec3b>(y,x)[c] + delta >255){
-							 new_delta = 255 - (int)XYZ.at<Vec3b>(y,x)[c];
-						 }else{
-							 new_delta = (int)XYZ.at<Vec3b>(y,x)[c]- 0;
-						 }
-
-					 }else{
-
-					 new_delta = delta;
-					 }
-
-					fusion_pair_1.at<Vec3b>(y,x)[c] =  (int)XYZ.at<Vec3b>(y,x)[c] + new_delta;
-					fusion_pair_2.at<Vec3b>(y,x)[c] =  (int)XYZ.at<Vec3b>(y,x)[c] - new_delta;
-
-				 }
-		    }
-		 }
-
-	Mat XYZ2BGR;
-
-	//Dont need to convert back to XYZ from BGR
-	//cvtColor(XYZ,XYZ2BGR,COLOR_XYZ2BGR);
-
-	//namedWindow( "BGR back to XYZ", WINDOW_AUTOSIZE );// Create a window for display.
-	//imshow( "Display window XYZ->BGR", XYZ2BGR);// Show our image inside it.
-	//waitKey(0);
+	//Mat XYZ2BGR;
 
 
 	//convert fusion pair to BGR
