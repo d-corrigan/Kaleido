@@ -19,8 +19,12 @@ using namespace cv;
 int main(){
 
 
+	int BLOCK_SIZE_Col = 16;
+	int BLOCK_SIZE_Row = 16;
+
+
 	// open the video file for reading
-	VideoCapture cap("output.mp4");
+	VideoCapture cap("test.mp4");
 
 	if ( !cap.isOpened() )  // if not success, exit program
 	{
@@ -60,9 +64,7 @@ int main(){
 		}
 
 		//get width and height of the frames
-		int width = BGR.rows;
-		int height = BGR.cols;
-		cout<<frame_number<<" Frame Width: "<<width<<" Height: "<<height<<endl;
+		cout<<frame_number<<BGR.size()<<endl;
 
 		//increase the number of frames to show how many original frames that have been processed
 		frame_number++;
@@ -97,21 +99,66 @@ int main(){
 
 		int delta = 40;
 
+		cout<<"Size: "<<XYZ.size()<<endl;
+
 		//create the fusion pair matrices 8bit 3 channel with the same size as the original
 		Mat fusion_pair_1 = Mat::zeros( XYZ.size(), XYZ.type() );
 		Mat fusion_pair_2 = Mat::zeros( XYZ.size(), XYZ.type() );
 
+
+		 /* Cloning the image to another for visualization later, if you do not want to visualize the result just comment every line related to visualization */
+		 cv::Mat maskImg = XYZ.clone();
+
+		 /* Checking if the clone image was cloned correctly */
+
+		 if(!maskImg.data || maskImg.empty())
+			 cout<< "Problem Loading Image" << endl;
+
+
+		vector <Mat> blocks;
+
+		namedWindow( "small Image", WINDOW_AUTOSIZE );
+
+		// check if divisors fit to image dimensions
+		if(XYZ.cols % BLOCK_SIZE_Col == 0 && XYZ.rows % BLOCK_SIZE_Row == 0)
+	   {
+			for(int y = 0; y < XYZ.cols; y += XYZ.cols / BLOCK_SIZE_Col)
+			{
+				for(int x = 0; x < XYZ.rows; x += XYZ.rows / BLOCK_SIZE_Row)
+				{
+
+					//creating the block
+					cv::Rect rect = cv::Rect(y, x, (XYZ.cols / BLOCK_SIZE_Col), (XYZ.rows / BLOCK_SIZE_Row));
+
+					//split image into blocks
+					blocks.push_back(XYZ(rect).clone());
+
+
+					//show part of image being operated on
+					rectangle(maskImg, Point(y, x), Point(y + (maskImg.cols / BLOCK_SIZE_Col) - 1, x + (maskImg.rows / BLOCK_SIZE_Row) - 1), CV_RGB(255, 0, 0), 1); // visualization
+
+					//show the current block
+					imshow ( "small Images", cv::Mat ( XYZ, rect ));// visualization
+					imshow("Image", maskImg); // visualization
+
+
+					waitKey(0); // visualization
+				}
+			}
+	   }else if(XYZ.cols % BLOCK_SIZE_Col != 0){
+		cout << "Error: Please use another divisor for the column split." << endl;
+		exit(1);
+	   }else if(XYZ.rows % BLOCK_SIZE_Row != 0){
+		cout << "Error: Please use another divisor for the row split." << endl;
+		exit(1);
+	   }
 
 		 /// Do the operation new_image(i,j) = alpha*image(i,j) + beta
 		 for( int y = 0; y < XYZ.rows; y++ ){
 			 for( int x = 0; x < XYZ.cols; x++ ){
 				 for( int c = 0; c < 3; c++ ){
 
-					 //cout<<"["<<(int)XYZ.at<Vec3b>(y,x)[c]<<"]"<<endl;
-
 					 int new_delta;
-
-
 
 					 if ((int)XYZ.at<Vec3b>(y,x)[c] + delta >255 || (int)XYZ.at<Vec3b>(y,x)[c] - delta < 0){
 
@@ -125,9 +172,6 @@ int main(){
 
 					 new_delta = delta;
 					 }
-
-
-
 
 					fusion_pair_1.at<Vec3b>(y,x)[c] =  (int)XYZ.at<Vec3b>(y,x)[c] + new_delta;
 					fusion_pair_2.at<Vec3b>(y,x)[c] =  (int)XYZ.at<Vec3b>(y,x)[c] - new_delta;
