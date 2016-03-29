@@ -10,11 +10,14 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/core/core.hpp>
+#include <sstream>
 
 
 using namespace std;
 using namespace cv;
 
+
+int value = 1;
 
 int main(){
 
@@ -60,6 +63,26 @@ int main(){
 		if (!bSuccess)
 		{
 			cout << "End of File." << endl;
+
+
+			cv::VideoCapture in_capture("images/%04d.png");
+
+				 Mat img;
+
+
+				  VideoWriter out_capture("images/video.avi", CV_FOURCC('M','J','P','G'), 240, Size(512,512));
+
+				  while (true)
+				  {
+				    in_capture >> img;
+				    if(img.empty())
+				        break;
+
+				    out_capture.write(img);
+				  }
+
+
+
 			break;
 		}
 
@@ -97,7 +120,7 @@ int main(){
 		//imshow( "Z Channel", XYZ_channels[2] );  // Show our image inside it.
 		waitKey(0);
 
-		int delta = 40;
+		int delta = 10;
 
 		cout<<"Size: "<<XYZ.size()<<endl;
 
@@ -158,9 +181,6 @@ int main(){
 					}
 
 					previous_y = y;
-
-
-
 
 
 					if(even_block == true){
@@ -255,29 +275,82 @@ int main(){
 
 
 
-	//Write the four frames
-	cv::imwrite("images/0001.png",BGR);
-	cv::imwrite("images/0002.png",fusion_pair_1);
-	cv::imwrite("images/0003.png",fusion_pair_2);
-	cv::imwrite("images/0004.png",BGR);
+	std::string result = "";
+	std::string result2 = "";
+	std::string result3 = "";
+	std::string result4 = "";
+	std::string format = ".png";
+	std::string prefix = "images/000";
+
+	std::stringstream sstm;
+	std::stringstream sstm2;
+	std::stringstream sstm3;
+	std::stringstream sstm4;
+
+	if (value > 9){
+		prefix = "images/00";
+	}else if(value > 99){
+		prefix = "images/0";
+	}else if(value > 999){
+		prefix = "images/";
+	}else{
+		prefix = "images/000";
+	}
+
+
+	sstm << prefix << value <<format;
+	result = sstm.str();
+
+	if (value+1 > 9){
+		prefix = "images/00";
+	}else if(value+1 > 99){
+		prefix = "images/0";
+	}else if(value+1 > 999){
+		prefix = "images/";
+	}else{
+		prefix = "images/000";
+	}
+
+	sstm2 << prefix << value+1 <<format;
+	result2 = sstm2.str();
+
+	if (value+2 > 9){
+		prefix = "images/00";
+	}else if(value +2> 99){
+		prefix = "images/0";
+	}else if(value +2> 999){
+		prefix = "images/";
+	}else{
+		prefix = "images/000";
+	}
+
+	sstm3 << prefix << value+2 <<format;
+	result3 = sstm3.str();
+
+	if (value+3 > 9){
+		prefix = "images/00";
+	}else if(value +3 > 99){
+		prefix = "images/0";
+	}else if(value +3 > 999){
+		prefix = "images/";
+	}else{
+		prefix = "images/000";
+	}
+
+	sstm4 << prefix << value+3 <<format;
+	result4 = sstm4.str();
+
+	value += 4;
+
+
+		cv::imwrite(result,BGR);
+		cv::imwrite(result2,fusion_pair_1);
+		cv::imwrite(result3,fusion_pair_2);
+		cv::imwrite(result4,BGR);
 
 
 
-	cv::VideoCapture in_capture("images/%04d.png");
 
-	 Mat img;
-
-
-	  VideoWriter out_capture("images/video.avi", CV_FOURCC('M','J','P','G'), 240, Size(512,512));
-
-	  while (true)
-	  {
-	    in_capture >> img;
-	    if(img.empty())
-	        break;
-
-	    out_capture.write(img);
-	  }
 	}
 
 }
