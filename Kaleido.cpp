@@ -19,8 +19,8 @@ using namespace cv;
 int main(){
 
 
-	int BLOCK_SIZE_Col = 16;
-	int BLOCK_SIZE_Row = 16;
+	int BLOCK_SIZE_Col = 8;
+	int BLOCK_SIZE_Row = 8;
 
 
 	// open the video file for reading
@@ -137,16 +137,17 @@ int main(){
 					//split image into blocks
 					blocks.push_back(XYZ(rect).clone());
 
-
-
-
 					//show part of image being operated on
 					rectangle(maskImg, Point(y, x), Point(y + (maskImg.cols / BLOCK_SIZE_Col) - 1, x + (maskImg.rows / BLOCK_SIZE_Row) - 1), CV_RGB(255, 0, 0), 1); // visualization
 
 					//show the current block
-					imshow ( "small Images", cv::Mat ( XYZ, rect ));// visualization
+					//imshow ( "small Images", cv::Mat ( XYZ, rect ));// visualization
 					imshow("Image", maskImg); // visualization
 
+
+
+
+					// this creates the checker board pattern
 
 					if(y > previous_y){
 						if (even_block){
@@ -157,6 +158,9 @@ int main(){
 					}
 
 					previous_y = y;
+
+
+
 
 
 					if(even_block == true){
@@ -187,39 +191,40 @@ int main(){
 
 								 }
 							}
-					}
+						}
 
 
 						// HERE we can change the even blocks
 
 					}else{
+
 						even_block = true;
 
 						for (int i = 0; i < XYZ(rect).rows; i++){
-													for( int j = 0; j < XYZ(rect).cols; j++){
-														for( int c = 0; c < 3; c++ ){
+							for( int j = 0; j < XYZ(rect).cols; j++){
+								for( int c = 0; c < 3; c++ ){
 
-															 int new_delta;
+									 int new_delta;
 
-															 if ((int)XYZ(rect).at<Vec3b>(j,i)[c] + delta >255 || (int)XYZ(rect).at<Vec3b>(j,i)[c] - delta < 0){
+									 if ((int)XYZ(rect).at<Vec3b>(j,i)[c] + delta >255 || (int)XYZ(rect).at<Vec3b>(j,i)[c] - delta < 0){
 
-																 if((int)XYZ(rect).at<Vec3b>(j,i)[c] + delta >255){
-																	 new_delta = 255 - (int)XYZ(rect).at<Vec3b>(j,i)[c];
-																 }else{
-																	 new_delta = (int)XYZ(rect).at<Vec3b>(j,i)[c]- 0;
-																 }
+										 if((int)XYZ(rect).at<Vec3b>(j,i)[c] + delta >255){
+											 new_delta = 255 - (int)XYZ(rect).at<Vec3b>(j,i)[c];
+										 }else{
+											 new_delta = (int)XYZ(rect).at<Vec3b>(j,i)[c]- 0;
+										 }
 
-															 }else{
+									 }else{
 
-															 new_delta = delta;
-															 }
+									 new_delta = delta;
+									 }
 
-															fusion_pair_1.at<Vec3b>(x+j,y+i)[c] =  (int)XYZ(rect).at<Vec3b>(j,i)[c] ;
-															fusion_pair_2.at<Vec3b>(x+j,y+i)[c] =  (int)XYZ(rect).at<Vec3b>(j,i)[c] ;
-
-														 }
-													}
-											}
+									 //Here we can alternate the _+ delta, right now its left as is
+									fusion_pair_1.at<Vec3b>(x+j,y+i)[c] =  (int)XYZ(rect).at<Vec3b>(j,i)[c] ;
+									fusion_pair_2.at<Vec3b>(x+j,y+i)[c] =  (int)XYZ(rect).at<Vec3b>(j,i)[c] ;
+								}
+							}
+						}
 					}
 					//waitKey(0); // visualization
 				}
@@ -242,17 +247,37 @@ int main(){
 
 	namedWindow( "FusionPair + Delta", WINDOW_AUTOSIZE );// Create a window for display.
 	imshow( "FusionPair + Delta", fusion_pair_1);
-	cv::imwrite("images/fusion_pair_1_BGR.tiff",fusion_pair_1);
+
 
 
 	namedWindow( "FusionPair - Delta", WINDOW_AUTOSIZE );// Create a window for display.
 	imshow( "FusionPair - Delta", fusion_pair_2);
-	cv::imwrite("images/fusion_pair_2_BGR.tiff",fusion_pair_2);
 
+
+
+	//Write the four frames
+	cv::imwrite("images/0001.png",BGR);
+	cv::imwrite("images/0002.png",fusion_pair_1);
+	cv::imwrite("images/0003.png",fusion_pair_2);
+	cv::imwrite("images/0004.png",BGR);
+
+
+
+	cv::VideoCapture in_capture("images/%04d.png");
+
+	 Mat img;
+
+
+	  VideoWriter out_capture("images/video.avi", CV_FOURCC('M','J','P','G'), 240, Size(512,512));
+
+	  while (true)
+	  {
+	    in_capture >> img;
+	    if(img.empty())
+	        break;
+
+	    out_capture.write(img);
+	  }
 	}
+
 }
-
-
-
-
-
