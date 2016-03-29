@@ -17,13 +17,22 @@ using namespace std;
 using namespace cv;
 
 
+
+
 int value = 1;
+
+
+//important variables
+int delta = 30;
+
+int BLOCK_SIZE_Col = 8;
+int BLOCK_SIZE_Row = 8;
+
+int frame_rate= 120;
 
 int main(){
 
 
-	int BLOCK_SIZE_Col = 8;
-	int BLOCK_SIZE_Row = 8;
 
 
 	// open the video file for reading
@@ -66,22 +75,19 @@ int main(){
 
 
 			cv::VideoCapture in_capture("images/%04d.png");
+			Mat img;
 
-				 Mat img;
+			cout<< "video written @"<<frame_rate<<" frames / sec"<<endl;
+			VideoWriter out_capture("images/video.avi", CV_FOURCC('M','J','P','G'), frame_rate, Size(512,512));
 
+		  while (true)
+		  {
+			in_capture >> img;
+			if(img.empty())
+				break;
 
-				  VideoWriter out_capture("images/video.avi", CV_FOURCC('M','J','P','G'), 240, Size(512,512));
-
-				  while (true)
-				  {
-				    in_capture >> img;
-				    if(img.empty())
-				        break;
-
-				    out_capture.write(img);
-				  }
-
-
+			out_capture.write(img);
+		  }
 
 			break;
 		}
@@ -106,7 +112,7 @@ int main(){
 		split(XYZ, XYZ_channels);
 
 		namedWindow( "Display window XYZ", WINDOW_AUTOSIZE );// Create a window for display.
-		imshow( "Display window XYZ", XYZ );
+		//imshow( "Display window XYZ", XYZ );
 
 
 		//Show three channels "grayscale"
@@ -118,9 +124,8 @@ int main(){
 
 		namedWindow( "Z Channel", WINDOW_AUTOSIZE );// Create a window for display.
 		//imshow( "Z Channel", XYZ_channels[2] );  // Show our image inside it.
-		waitKey(0);
+		//waitKey(0);
 
-		int delta = 10;
 
 		cout<<"Size: "<<XYZ.size()<<endl;
 
@@ -152,8 +157,6 @@ int main(){
 				for(int x = 0; x < XYZ.rows; x += XYZ.rows / BLOCK_SIZE_Row)
 				{
 
-
-
 					//creating the block
 					cv::Rect rect = cv::Rect(y, x, (XYZ.cols / BLOCK_SIZE_Col), (XYZ.rows / BLOCK_SIZE_Row));
 
@@ -164,11 +167,8 @@ int main(){
 					rectangle(maskImg, Point(y, x), Point(y + (maskImg.cols / BLOCK_SIZE_Col) - 1, x + (maskImg.rows / BLOCK_SIZE_Row) - 1), CV_RGB(255, 0, 0), 1); // visualization
 
 					//show the current block
-					//imshow ( "small Images", cv::Mat ( XYZ, rect ));// visualization
+					imshow ( "small Images", cv::Mat ( XYZ, rect ));// visualization
 					imshow("Image", maskImg); // visualization
-
-
-
 
 					// this creates the checker board pattern
 
@@ -257,8 +257,6 @@ int main(){
 		exit(1);
 	   }
 
-	//Mat XYZ2BGR;
-
 
 	//convert fusion pair to BGR
 	cvtColor(fusion_pair_1,fusion_pair_1,COLOR_XYZ2BGR);
@@ -266,14 +264,14 @@ int main(){
 
 
 	namedWindow( "FusionPair + Delta", WINDOW_AUTOSIZE );// Create a window for display.
-	imshow( "FusionPair + Delta", fusion_pair_1);
-
-
+	//imshow( "FusionPair + Delta", fusion_pair_1);
 
 	namedWindow( "FusionPair - Delta", WINDOW_AUTOSIZE );// Create a window for display.
-	imshow( "FusionPair - Delta", fusion_pair_2);
+	//imshow( "FusionPair - Delta", fusion_pair_2);
 
 
+
+	//Write images to file to be converted to video
 
 	std::string result = "";
 	std::string result2 = "";
@@ -342,14 +340,10 @@ int main(){
 
 	value += 4;
 
-
 		cv::imwrite(result,BGR);
 		cv::imwrite(result2,fusion_pair_1);
 		cv::imwrite(result3,fusion_pair_2);
 		cv::imwrite(result4,BGR);
-
-
-
 
 	}
 
