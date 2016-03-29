@@ -48,7 +48,7 @@ int main(){
 
 	//get the frames per seconds of the video
 	double fps = cap.get(CV_CAP_PROP_FPS);
-	cout << "Frame per seconds : " << fps << endl;
+	cout << "Original Video :: Frame per seconds : " << fps << endl;
 
 	//create a window called "MyVideo" to be used later
 	//namedWindow("MyVideo",CV_WINDOW_AUTOSIZE);
@@ -93,7 +93,7 @@ int main(){
 		}
 
 		//get width and height of the frames
-		cout<<frame_number<<BGR.size()<<endl;
+		cout<<"Frame: "<<frame_number<<" "<<BGR.size()<<endl;
 
 		//increase the number of frames to show how many original frames that have been processed
 		frame_number++;
@@ -127,7 +127,6 @@ int main(){
 		//waitKey(0);
 
 
-		cout<<"Size: "<<XYZ.size()<<endl;
 
 		//create the fusion pair matrices 8bit 3 channel with the same size as the original
 		Mat fusion_pair_1 = Mat::zeros( XYZ.size(), XYZ.type() );
