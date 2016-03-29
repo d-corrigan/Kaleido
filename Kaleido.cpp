@@ -112,27 +112,32 @@ int main(){
 		 /* Checking if the clone image was cloned correctly */
 
 		 if(!maskImg.data || maskImg.empty())
-			 cout<< "Problem Loading Image" << endl;
+		cout<< "Problem Loading Image" << endl;
 
 
 		bool even_block = false;
+		int previous_y = 0;
 		vector <Mat> blocks;
 
 		namedWindow( "small Image", WINDOW_AUTOSIZE );
 
 		// check if divisors fit to image dimensions
 		if(XYZ.cols % BLOCK_SIZE_Col == 0 && XYZ.rows % BLOCK_SIZE_Row == 0)
-	   {
+		{
 			for(int y = 0; y < XYZ.cols; y += XYZ.cols / BLOCK_SIZE_Col)
 			{
 				for(int x = 0; x < XYZ.rows; x += XYZ.rows / BLOCK_SIZE_Row)
 				{
+
+
 
 					//creating the block
 					cv::Rect rect = cv::Rect(y, x, (XYZ.cols / BLOCK_SIZE_Col), (XYZ.rows / BLOCK_SIZE_Row));
 
 					//split image into blocks
 					blocks.push_back(XYZ(rect).clone());
+
+
 
 
 					//show part of image being operated on
@@ -143,18 +148,78 @@ int main(){
 					imshow("Image", maskImg); // visualization
 
 
+					if(y > previous_y){
+						if (even_block){
+							even_block = false;
+						}else{
+							even_block = true;
+						}
+					}
+
+					previous_y = y;
+
+
 					if(even_block == true){
+
 						even_block =  false;
+
+						for (int i = 0; i < XYZ(rect).rows; i++){
+							for( int j = 0; j < XYZ(rect).cols; j++){
+								for( int c = 0; c < 3; c++ ){
+
+									 int new_delta;
+
+									 if ((int)XYZ(rect).at<Vec3b>(j,i)[c] + delta >255 || (int)XYZ(rect).at<Vec3b>(j,i)[c] - delta < 0){
+
+										 if((int)XYZ(rect).at<Vec3b>(j,i)[c] + delta >255){
+											 new_delta = 255 - (int)XYZ(rect).at<Vec3b>(j,i)[c];
+										 }else{
+											 new_delta = (int)XYZ(rect).at<Vec3b>(j,i)[c]- 0;
+										 }
+
+									 }else{
+
+									 new_delta = delta;
+									 }
+
+									fusion_pair_1.at<Vec3b>(x+j,y+i)[c] =  (int)XYZ(rect).at<Vec3b>(j,i)[c] + new_delta;
+									fusion_pair_2.at<Vec3b>(x+j,y+i)[c] =  (int)XYZ(rect).at<Vec3b>(j,i)[c] - new_delta;
+
+								 }
+							}
+					}
+
 
 						// HERE we can change the even blocks
 
-
-
-
-
-
 					}else{
 						even_block = true;
+
+						for (int i = 0; i < XYZ(rect).rows; i++){
+													for( int j = 0; j < XYZ(rect).cols; j++){
+														for( int c = 0; c < 3; c++ ){
+
+															 int new_delta;
+
+															 if ((int)XYZ(rect).at<Vec3b>(j,i)[c] + delta >255 || (int)XYZ(rect).at<Vec3b>(j,i)[c] - delta < 0){
+
+																 if((int)XYZ(rect).at<Vec3b>(j,i)[c] + delta >255){
+																	 new_delta = 255 - (int)XYZ(rect).at<Vec3b>(j,i)[c];
+																 }else{
+																	 new_delta = (int)XYZ(rect).at<Vec3b>(j,i)[c]- 0;
+																 }
+
+															 }else{
+
+															 new_delta = delta;
+															 }
+
+															fusion_pair_1.at<Vec3b>(x+j,y+i)[c] =  (int)XYZ(rect).at<Vec3b>(j,i)[c] ;
+															fusion_pair_2.at<Vec3b>(x+j,y+i)[c] =  (int)XYZ(rect).at<Vec3b>(j,i)[c] ;
+
+														 }
+													}
+											}
 					}
 					//waitKey(0); // visualization
 				}
