@@ -16,21 +16,44 @@
 using namespace std;
 using namespace cv;
 
-
-
-
 int value = 1;
 
 
 //important variables
 int delta = 30;
 
-int BLOCK_SIZE_Col = 8;
-int BLOCK_SIZE_Row = 8;
+int BLOCK_SIZE_Col = 16;
+int BLOCK_SIZE_Row = 16;
 
 int frame_rate= 120;
 
+//vector<Mat>showSeperatedChannels(vector<Mat>channels);
+
 int main(){
+
+
+
+	////////NEW CODE/////////////////
+
+	Mat test, test2;
+	test = imread("0001.png");
+	Vec3b pixel = test.at<Vec3b>(0,0);
+
+	cvtColor(test,test2, CV_BGR2XYZ);
+
+	Vec3b pixel3 = test2.at<Vec3b>(0,0);
+
+	cout<<endl<<"X: "<<(unsigned int)pixel3[0]<<endl;
+	cout<<"Y: "<<(unsigned int)pixel3[1]<<endl;
+	cout<<"Z: "<<(unsigned int)pixel3[2]<<endl;
+
+	float Y = (float)pixel3[1];
+	float x = (float)pixel3[0] / ( (float)pixel3[0] + (float)pixel3[1] + (float)pixel3[2] );
+	float y = (float)pixel3[1] / ( (float)pixel3[0] + (float)pixel3[1] + (float)pixel3[2] );
+
+	cout<<endl<<"Y: "<<Y<< " x: " << x << " y: "<< y<<endl<<endl;
+
+	//////////////////////////////
 
 
 
@@ -73,11 +96,12 @@ int main(){
 		{
 			cout << "End of File." << endl;
 
-
+			// Write to Video when finished reassembling four sub-frames
 			cv::VideoCapture in_capture("images/%04d.png");
 			Mat img;
 
-			cout<< "video written @"<<frame_rate<<" frames / sec"<<endl;
+
+			cout<< "video written @"<<frame_rate<<" frames/sec"<<endl;
 			VideoWriter out_capture("images/video.avi", CV_FOURCC('M','J','P','G'), frame_rate, Size(512,512));
 
 		  while (true)
@@ -97,7 +121,6 @@ int main(){
 
 		//increase the number of frames to show how many original frames that have been processed
 		frame_number++;
-
 
 		/*
 		 * CIE XYZ is a matrix with format (x,z) Y luminance
@@ -186,6 +209,8 @@ int main(){
 
 						even_block =  false;
 
+
+						// Change ever other block for the two fusion pair
 						for (int i = 0; i < XYZ(rect).rows; i++){
 							for( int j = 0; j < XYZ(rect).cols; j++){
 								for( int c = 0; c < 3; c++ ){
@@ -213,12 +238,13 @@ int main(){
 						}
 
 
-						// HERE we can change the even blocks
+
 
 					}else{
 
 						even_block = true;
 
+						// Leave every other block as is (with ability to use a delta)
 						for (int i = 0; i < XYZ(rect).rows; i++){
 							for( int j = 0; j < XYZ(rect).cols; j++){
 								for( int c = 0; c < 3; c++ ){
@@ -248,6 +274,7 @@ int main(){
 					//waitKey(0); // visualization
 				}
 			}
+		//Verify block size will work
 	   }else if(XYZ.cols % BLOCK_SIZE_Col != 0){
 		cout << "Error: Please use another divisor for the column split." << endl;
 		exit(1);
@@ -339,11 +366,13 @@ int main(){
 
 	value += 4;
 
-		cv::imwrite(result,BGR);
+		cv::imwrite(result,fusion_pair_2);
 		cv::imwrite(result2,fusion_pair_1);
 		cv::imwrite(result3,fusion_pair_2);
-		cv::imwrite(result4,BGR);
+		cv::imwrite(result4,fusion_pair_1);
 
 	}
+
+	return (1);
 
 }
