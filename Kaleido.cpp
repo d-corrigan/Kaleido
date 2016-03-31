@@ -31,6 +31,7 @@ int frame_rate= 120;
 
 int main(){
 
+
 	//////////////////////////////
 
 	//for random color pollution set to true
