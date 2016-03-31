@@ -20,7 +20,7 @@ int value = 1;
 
 
 //important variables
-int delta = 30;
+float delta = 30;
 
 int BLOCK_SIZE_Col = 16;
 int BLOCK_SIZE_Row = 16;
@@ -31,32 +31,12 @@ int frame_rate= 120;
 
 int main(){
 
-
-
-	////////NEW CODE/////////////////
-
-	Mat test, test2;
-	test = imread("0001.png");
-	Vec3b pixel = test.at<Vec3b>(0,0);
-
-	cvtColor(test,test2, CV_BGR2XYZ);
-
-	Vec3b pixel3 = test2.at<Vec3b>(0,0);
-
-	cout<<endl<<"X: "<<(unsigned int)pixel3[0]<<endl;
-	cout<<"Y: "<<(unsigned int)pixel3[1]<<endl;
-	cout<<"Z: "<<(unsigned int)pixel3[2]<<endl;
-
-	float Y = (float)pixel3[1];
-	float x = (float)pixel3[0] / ( (float)pixel3[0] + (float)pixel3[1] + (float)pixel3[2] );
-	float y = (float)pixel3[1] / ( (float)pixel3[0] + (float)pixel3[1] + (float)pixel3[2] );
-
-	cout<<endl<<"Y: "<<Y<< " x: " << x << " y: "<< y<<endl<<endl;
-
 	//////////////////////////////
 
+	//for random color pollution set to true
+	bool random = true;
 
-
+	//////////////////////////////
 
 	// open the video file for reading
 	VideoCapture cap("test.mp4");
@@ -155,6 +135,9 @@ int main(){
 		Mat fusion_pair_1 = Mat::zeros( XYZ.size(), XYZ.type() );
 		Mat fusion_pair_2 = Mat::zeros( XYZ.size(), XYZ.type() );
 
+		Mat color_fusion_pair_1 = Mat::zeros( XYZ.size(), XYZ.type() );
+		Mat color_fusion_pair_2 = Mat::zeros( XYZ.size(), XYZ.type() );
+
 
 		 /* Cloning the image to another for visualization later, if you do not want to visualize the result just comment every line related to visualization */
 		 cv::Mat maskImg = XYZ.clone();
@@ -170,6 +153,132 @@ int main(){
 		vector <Mat> blocks;
 
 		namedWindow( "small Image", WINDOW_AUTOSIZE );
+
+
+		if (random){
+
+
+			float fusion1x;
+			float fusion1y;
+			float fusion2x;
+			float fusion2y;
+
+			for(int i = 0; i < XYZ.cols; i++)
+			{
+				for(int j = 0; j < XYZ.rows; j++)
+				{
+
+					Vec3b pixel = XYZ.at<Vec3b>(i,j);
+
+					delta = .02;
+
+					//convert to Yxy format
+					float Y = (float)pixel[1] /255;
+					float x = (float)pixel[0] / ( (float)pixel[0] + (float)pixel[1] + (float)pixel[2] );
+					float y = (float)pixel[1] / ( (float)pixel[0] + (float)pixel[1] + (float)pixel[2] );
+
+					//choose a random color within the RGB triangle
+
+					//Green Point
+					float greenX = 0.28;
+					float greenY = 0.595;
+					//Blue Point
+					float blueX = 0.155;
+					float blueY = 0.07;
+					//Red Point
+					float redX = 0.625;
+					float redY = 0.34;
+
+					bool in_RGB_range = false;
+
+					float random_pointX;
+					float random_pointY;
+
+					// get a random color
+					while(in_RGB_range == false ){
+
+						//random number between 1 and 0
+						random_pointX = ((float) rand()) / (float) RAND_MAX;
+						random_pointY = ((float) rand()) / (float) RAND_MAX;
+
+
+						float alpha = ((blueY - redY)*(random_pointX - redX) + (redX - blueX)*(random_pointY - redY)) /((blueY - redY)*(greenX - redX) + (redX - blueX)*(greenY - redY));
+						float beta = ((redY - greenY)*(random_pointX - redX) + (greenX - redX)*(random_pointY - redY)) /((blueY - redY)*(blueX - redX) + (redX - blueX)*(greenY - redY));
+						float gamma = 1.0f - alpha - beta;
+
+
+
+						if (alpha > 0 && beta > 0 && gamma > 0){
+
+							in_RGB_range = true;
+
+
+						}
+
+
+					float distance = sqrt((random_pointX-x)*(random_pointX-x) + (random_pointY-y)*(random_pointY-y));
+
+					float radians = atan2(y - random_pointY, x - random_pointX);
+
+					float newX = x + distance * cos(radians);
+					float newY = y + distance * sin(radians);
+
+					alpha = ((blueY - redY)*(newX - redX) + (redX - blueX)*(newY - redY)) /((blueY - redY)*(greenX - redX) + (redX - blueX)*(greenY - redY));
+					beta = ((redY - greenY)*(newX - redX) + (greenX - redX)*(newY - redY)) /((blueY - redY)*(blueX - redX) + (redX - blueX)*(greenY - redY));
+					gamma = 1.0f - alpha - beta;
+
+
+
+					if (alpha > 0 && beta > 0 && gamma > 0){
+
+						in_RGB_range = true;
+
+						fusion1x = random_pointX;
+						fusion1y = random_pointY;
+
+						fusion2x = newX;
+						fusion2y = newY;
+
+
+						float convert1X = fusion1x * ( Y*255 / fusion1y );
+						float convert1Y = Y*255;
+						float convert1Z = ( 1 - fusion1x - fusion1y ) * ( Y*255 / fusion1y );
+
+						float convert2X = fusion2x * ( Y*255 / fusion2y );
+						float convert2Y = Y*255;
+						float convert2Z = ( 1 - fusion2x - fusion2y ) * ( Y*255 / fusion2y );
+
+
+
+						color_fusion_pair_1.at<Vec3b>(i,j)[0] = convert1X;
+						color_fusion_pair_1.at<Vec3b>(i,j)[1] = convert1Y;
+						color_fusion_pair_1.at<Vec3b>(i,j)[2] = convert1Z;
+
+						color_fusion_pair_2.at<Vec3b>(i,j)[0] = convert2X;
+						color_fusion_pair_2.at<Vec3b>(i,j)[1] = convert2Y;
+						color_fusion_pair_2.at<Vec3b>(i,j)[2] = convert2Z;
+
+						//cout<< "angle: " << radians <<endl;
+						//cout<<"distance: "<<distance<<endl;
+						//cout<<"xy("<<x<<","<<y<<")"<<endl;
+						//cout<<"new("<<newX<<","<<newY<<")"<<endl;
+						//cout<<"random("<<random_pointX<<","<<random_pointY<<")"<<endl;
+
+						cout<<"XYZ("<<convert1X<<","<<convert1Y<<")"<<endl;
+
+
+					}else {
+
+						in_RGB_range = false;
+
+					}
+
+
+
+					}
+				}
+			}
+		}//END of random color
 
 		// check if divisors fit to image dimensions
 		if(XYZ.cols % BLOCK_SIZE_Col == 0 && XYZ.rows % BLOCK_SIZE_Row == 0)
@@ -189,11 +298,10 @@ int main(){
 					rectangle(maskImg, Point(y, x), Point(y + (maskImg.cols / BLOCK_SIZE_Col) - 1, x + (maskImg.rows / BLOCK_SIZE_Row) - 1), CV_RGB(255, 0, 0), 1); // visualization
 
 					//show the current block
-					imshow ( "small Images", cv::Mat ( XYZ, rect ));// visualization
-					imshow("Image", maskImg); // visualization
+					//imshow ( "small Images", cv::Mat ( XYZ, rect ));// visualization
+					//imshow("Image", maskImg); // visualization
 
 					// this creates the checker board pattern
-
 					if(y > previous_y){
 						if (even_block){
 							even_block = false;
@@ -234,6 +342,7 @@ int main(){
 									fusion_pair_2.at<Vec3b>(x+j,y+i)[c] =  (int)XYZ(rect).at<Vec3b>(j,i)[c] - new_delta;
 
 								 }
+
 							}
 						}
 
@@ -287,6 +396,9 @@ int main(){
 	//convert fusion pair to BGR
 	cvtColor(fusion_pair_1,fusion_pair_1,COLOR_XYZ2BGR);
 	cvtColor(fusion_pair_2,fusion_pair_2,COLOR_XYZ2BGR);
+
+	cvtColor(color_fusion_pair_1,color_fusion_pair_1,COLOR_XYZ2BGR);
+	cvtColor(color_fusion_pair_2,color_fusion_pair_2,COLOR_XYZ2BGR);
 
 
 	namedWindow( "FusionPair + Delta", WINDOW_AUTOSIZE );// Create a window for display.
@@ -366,10 +478,19 @@ int main(){
 
 	value += 4;
 
-		cv::imwrite(result,fusion_pair_2);
-		cv::imwrite(result2,fusion_pair_1);
-		cv::imwrite(result3,fusion_pair_2);
-		cv::imwrite(result4,fusion_pair_1);
+
+
+		if(random){
+			cv::imwrite(result,color_fusion_pair_2);
+			cv::imwrite(result2,color_fusion_pair_1);
+			cv::imwrite(result3,color_fusion_pair_2);
+			cv::imwrite(result4,color_fusion_pair_1);
+		}else{
+			cv::imwrite(result,fusion_pair_2);
+			cv::imwrite(result2,fusion_pair_1);
+			cv::imwrite(result3,fusion_pair_2);
+			cv::imwrite(result4,fusion_pair_1);
+		}
 
 	}
 
