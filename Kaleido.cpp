@@ -11,6 +11,7 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/core/core.hpp>
 #include <sstream>
+#include <iomanip>
 
 
 using namespace std;
@@ -39,7 +40,11 @@ int BLOCK_SIZE_Row = 32;
 
 int frame_rate= 120;
 
+
+
 ////methods
+
+String getNextName();
 
 float getDistanceBetweenPoints(float x1, float y1,float x2,float y2 );
 
@@ -345,91 +350,35 @@ int main(){
 
 	//Write images to file to be converted to video
 
-	std::string result = "";
-	std::string result2 = "";
-	std::string result3 = "";
-	std::string result4 = "";
-	std::string format = ".png";
-	std::string prefix = "images/000";
-
-	std::stringstream sstm;
-	std::stringstream sstm2;
-	std::stringstream sstm3;
-	std::stringstream sstm4;
-
-	if (value > 9){
-		prefix = "images/00";
-	}else if(value > 99){
-		prefix = "images/0";
-	}else if(value > 999){
-		prefix = "images/";
-	}else{
-		prefix = "images/000";
-	}
-
-
-	sstm << prefix << value <<format;
-	result = sstm.str();
-
-	if (value+1 > 9){
-		prefix = "images/00";
-	}else if(value+1 > 99){
-		prefix = "images/0";
-	}else if(value+1 > 999){
-		prefix = "images/";
-	}else{
-		prefix = "images/000";
-	}
-
-	sstm2 << prefix << value+1 <<format;
-	result2 = sstm2.str();
-
-	if (value+2 > 9){
-		prefix = "images/00";
-	}else if(value +2> 99){
-		prefix = "images/0";
-	}else if(value +2> 999){
-		prefix = "images/";
-	}else{
-		prefix = "images/000";
-	}
-
-	sstm3 << prefix << value+2 <<format;
-	result3 = sstm3.str();
-
-	if (value+3 > 9){
-		prefix = "images/00";
-	}else if(value +3 > 99){
-		prefix = "images/0";
-	}else if(value +3 > 999){
-		prefix = "images/";
-	}else{
-		prefix = "images/000";
-	}
-
-	sstm4 << prefix << value+3 <<format;
-	result4 = sstm4.str();
-
-	value += 4;
-
-
-
 		if(random){
-			cv::imwrite(result,color_fusion_pair_2);
-			cv::imwrite(result2,color_fusion_pair_1);
-			cv::imwrite(result3,color_fusion_pair_2);
-			cv::imwrite(result4,color_fusion_pair_1);
+			cv::imwrite(getNextName(),color_fusion_pair_2);
+			cv::imwrite(getNextName(),color_fusion_pair_1);
+			cv::imwrite(getNextName(),color_fusion_pair_2);
+			cv::imwrite(getNextName(),color_fusion_pair_1);
 		}else{
-			cv::imwrite(result,fusion_pair_2);
-			cv::imwrite(result2,fusion_pair_1);
-			cv::imwrite(result3,fusion_pair_2);
-			cv::imwrite(result4,fusion_pair_1);
+			cv::imwrite(getNextName(),fusion_pair_2);
+			cv::imwrite(getNextName(),fusion_pair_1);
+			cv::imwrite(getNextName(),fusion_pair_2);
+			cv::imwrite(getNextName(),fusion_pair_1);
 		}
 
 	}
 
 	return (1);
 
+}
+
+String getNextName(){
+
+	std::stringstream ss;
+	ss << "images/"<< std::setw(4) << std::setfill('0') << value <<".png";
+	std::string str = ss.str();
+	std::cout <<"Writing: "<< str<<endl;
+
+	value++;
+
+
+	return str;
 }
 
 float getDistanceBetweenPoints(float x1, float y1,float x2,float y2 ){
