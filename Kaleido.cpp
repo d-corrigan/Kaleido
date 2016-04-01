@@ -18,26 +18,51 @@ using namespace cv;
 
 int value = 1;
 
+//Green Point
+float greenX = 0.28;
+float greenY = 0.595;
+
+//Blue Point
+float blueX = 0.155;
+float blueY = 0.07;
+
+//Red Point
+float redX = 0.625;
+float redY = 0.34;
+
 
 //important variables
 float delta = 30;
 
-int BLOCK_SIZE_Col = 16;
-int BLOCK_SIZE_Row = 16;
+int BLOCK_SIZE_Col = 32;
+int BLOCK_SIZE_Row = 32;
 
 int frame_rate= 120;
 
-//vector<Mat>showSeperatedChannels(vector<Mat>channels);
+////methods
+
+float getDistanceBetweenPoints(float x1, float y1,float x2,float y2 );
+
+float getAngleInRadians (float x1, float y1,float x2,float y2 );
+
+bool isInRGBRange(int x, int y);
+
+float getRandomNumberInRange();
+
+float calculateNewXPoint(float dist, float angle, float x);
+
+float calculateNewYPoint(float dist, float angle, float y);
+
+float convertBackX(float Y, float x, float y );
+float convertBackY(float Y );
+float convertBackZ(float Y, float x, float y );
+
+
 
 int main(){
 
-
-	//////////////////////////////
-
 	//for random color pollution set to true
-	bool random = true;
-
-	//////////////////////////////
+	bool random = false;
 
 	// open the video file for reading
 	VideoCapture cap("test.mp4");
@@ -54,8 +79,6 @@ int main(){
 	double fps = cap.get(CV_CAP_PROP_FPS);
 	cout << "Original Video :: Frame per seconds : " << fps << endl;
 
-	//create a window called "MyVideo" to be used later
-	//namedWindow("MyVideo",CV_WINDOW_AUTOSIZE);
 
 	//used to keep track of the number of frames
 	int frame_number = 0;
@@ -115,27 +138,12 @@ int main(){
 		vector<Mat> XYZ_channels;
 		split(XYZ, XYZ_channels);
 
-		namedWindow( "Display window XYZ", WINDOW_AUTOSIZE );// Create a window for display.
-		//imshow( "Display window XYZ", XYZ );
-
-
-		//Show three channels "grayscale"
-		namedWindow( "X Channel", WINDOW_AUTOSIZE );// Create a window for display.
-		//imshow( "X Channel", XYZ_channels[0] );
-
-		namedWindow( "Y Channel", WINDOW_AUTOSIZE );// Create a window for display.
-		//imshow( "Y Channel", XYZ_channels[1] );
-
-		namedWindow( "Z Channel", WINDOW_AUTOSIZE );// Create a window for display.
-		//imshow( "Z Channel", XYZ_channels[2] );  // Show our image inside it.
-		//waitKey(0);
-
-
 
 		//create the fusion pair matrices 8bit 3 channel with the same size as the original
 		Mat fusion_pair_1 = Mat::zeros( XYZ.size(), XYZ.type() );
 		Mat fusion_pair_2 = Mat::zeros( XYZ.size(), XYZ.type() );
 
+		//create fusion pair for random color pollution
 		Mat color_fusion_pair_1 = Mat::zeros( XYZ.size(), XYZ.type() );
 		Mat color_fusion_pair_2 = Mat::zeros( XYZ.size(), XYZ.type() );
 
@@ -146,31 +154,23 @@ int main(){
 		 /* Checking if the clone image was cloned correctly */
 
 		 if(!maskImg.data || maskImg.empty())
-		cout<< "Problem Loading Image" << endl;
+			 cout<< "Problem Loading Image" << endl;
 
 
 		bool even_block = false;
 		int previous_y = 0;
 		vector <Mat> blocks;
 
-		namedWindow( "small Image", WINDOW_AUTOSIZE );
 
-
-		if (random){
-
-
-			float fusion1x;
-			float fusion1y;
-			float fusion2x;
-			float fusion2y;
+		if (random){// random color pixel pollution section
 
 			for(int i = 0; i < XYZ.cols; i++)
 			{
 				for(int j = 0; j < XYZ.rows; j++)
 				{
 
+					bool in_RGB_range = false;
 					Vec3b pixel = XYZ.at<Vec3b>(i,j);
-
 					delta = .02;
 
 					//convert to Yxy format
@@ -178,104 +178,48 @@ int main(){
 					float x = (float)pixel[0] / ( (float)pixel[0] + (float)pixel[1] + (float)pixel[2] );
 					float y = (float)pixel[1] / ( (float)pixel[0] + (float)pixel[1] + (float)pixel[2] );
 
-					//choose a random color within the RGB triangle
-
-					//Green Point
-					float greenX = 0.28;
-					float greenY = 0.595;
-					//Blue Point
-					float blueX = 0.155;
-					float blueY = 0.07;
-					//Red Point
-					float redX = 0.625;
-					float redY = 0.34;
-
-					bool in_RGB_range = false;
-
-					float random_pointX;
-					float random_pointY;
 
 					// get a random color
 					while(in_RGB_range == false ){
 
+
 						//random number between 1 and 0
-						random_pointX = ((float) rand()) / (float) RAND_MAX;
-						random_pointY = ((float) rand()) / (float) RAND_MAX;
+						float random_pointX = getRandomNumberInRange();
+						float random_pointY = getRandomNumberInRange();
+
+						// find out if random numbers are within the RGB range
+						if (isInRGBRange(random_pointX, random_pointY)){in_RGB_range = true;}
+
+						//get the distance between points
+						float distance = getDistanceBetweenPoints(random_pointX, random_pointY, x, y);
+
+						//get the angle between points
+						float radians = getAngleInRadians(random_pointX, random_pointY, x, y);
+
+						//calculate new point based on distance and angle
+						float calculateNewXPoint(float dist, float angle, float x);
+
+						float newX = calculateNewXPoint(distance, radians, x);
+						float newY = calculateNewYPoint(distance, radians, y);
 
 
-						float alpha = ((blueY - redY)*(random_pointX - redX) + (redX - blueX)*(random_pointY - redY)) /((blueY - redY)*(greenX - redX) + (redX - blueX)*(greenY - redY));
-						float beta = ((redY - greenY)*(random_pointX - redX) + (greenX - redX)*(random_pointY - redY)) /((blueY - redY)*(blueX - redX) + (redX - blueX)*(greenY - redY));
-						float gamma = 1.0f - alpha - beta;
+						if (isInRGBRange(newX, newY)){
 
+							// return two new coordinates to xyz format and add to Mat
+							color_fusion_pair_1.at<Vec3b>(i,j)[0] = convertBackX(Y, random_pointX, random_pointY );
+							color_fusion_pair_1.at<Vec3b>(i,j)[1] = convertBackY(Y );
+							color_fusion_pair_1.at<Vec3b>(i,j)[2] =  convertBackZ(Y, random_pointX, random_pointY );
 
-
-						if (alpha > 0 && beta > 0 && gamma > 0){
+							color_fusion_pair_2.at<Vec3b>(i,j)[0] = convertBackX(Y, newX, newY );
+							color_fusion_pair_2.at<Vec3b>(i,j)[1] = convertBackY(Y );
+							color_fusion_pair_2.at<Vec3b>(i,j)[2] = convertBackZ(Y, newX, newY );
 
 							in_RGB_range = true;
 
+						}else {
+							in_RGB_range = false;
 
 						}
-
-
-					float distance = sqrt((random_pointX-x)*(random_pointX-x) + (random_pointY-y)*(random_pointY-y));
-
-					float radians = atan2(y - random_pointY, x - random_pointX);
-
-					float newX = x + distance * cos(radians);
-					float newY = y + distance * sin(radians);
-
-					alpha = ((blueY - redY)*(newX - redX) + (redX - blueX)*(newY - redY)) /((blueY - redY)*(greenX - redX) + (redX - blueX)*(greenY - redY));
-					beta = ((redY - greenY)*(newX - redX) + (greenX - redX)*(newY - redY)) /((blueY - redY)*(blueX - redX) + (redX - blueX)*(greenY - redY));
-					gamma = 1.0f - alpha - beta;
-
-
-
-					if (alpha > 0 && beta > 0 && gamma > 0){
-
-						in_RGB_range = true;
-
-						fusion1x = random_pointX;
-						fusion1y = random_pointY;
-
-						fusion2x = newX;
-						fusion2y = newY;
-
-
-						float convert1X = fusion1x * ( Y*255 / fusion1y );
-						float convert1Y = Y*255;
-						float convert1Z = ( 1 - fusion1x - fusion1y ) * ( Y*255 / fusion1y );
-
-						float convert2X = fusion2x * ( Y*255 / fusion2y );
-						float convert2Y = Y*255;
-						float convert2Z = ( 1 - fusion2x - fusion2y ) * ( Y*255 / fusion2y );
-
-
-
-						color_fusion_pair_1.at<Vec3b>(i,j)[0] = convert1X;
-						color_fusion_pair_1.at<Vec3b>(i,j)[1] = convert1Y;
-						color_fusion_pair_1.at<Vec3b>(i,j)[2] = convert1Z;
-
-						color_fusion_pair_2.at<Vec3b>(i,j)[0] = convert2X;
-						color_fusion_pair_2.at<Vec3b>(i,j)[1] = convert2Y;
-						color_fusion_pair_2.at<Vec3b>(i,j)[2] = convert2Z;
-
-						//cout<< "angle: " << radians <<endl;
-						//cout<<"distance: "<<distance<<endl;
-						//cout<<"xy("<<x<<","<<y<<")"<<endl;
-						//cout<<"new("<<newX<<","<<newY<<")"<<endl;
-						//cout<<"random("<<random_pointX<<","<<random_pointY<<")"<<endl;
-
-						cout<<"XYZ("<<convert1X<<","<<convert1Y<<")"<<endl;
-
-
-					}else {
-
-						in_RGB_range = false;
-
-					}
-
-
-
 					}
 				}
 			}
@@ -296,11 +240,8 @@ int main(){
 					blocks.push_back(XYZ(rect).clone());
 
 					//show part of image being operated on
-					rectangle(maskImg, Point(y, x), Point(y + (maskImg.cols / BLOCK_SIZE_Col) - 1, x + (maskImg.rows / BLOCK_SIZE_Row) - 1), CV_RGB(255, 0, 0), 1); // visualization
+					//rectangle(maskImg, Point(y, x), Point(y + (maskImg.cols / BLOCK_SIZE_Col) - 1, x + (maskImg.rows / BLOCK_SIZE_Row) - 1), CV_RGB(255, 0, 0), 1); // visualization
 
-					//show the current block
-					//imshow ( "small Images", cv::Mat ( XYZ, rect ));// visualization
-					//imshow("Image", maskImg); // visualization
 
 					// this creates the checker board pattern
 					if(y > previous_y){
@@ -381,7 +322,6 @@ int main(){
 							}
 						}
 					}
-					//waitKey(0); // visualization
 				}
 			}
 		//Verify block size will work
@@ -398,16 +338,9 @@ int main(){
 	cvtColor(fusion_pair_1,fusion_pair_1,COLOR_XYZ2BGR);
 	cvtColor(fusion_pair_2,fusion_pair_2,COLOR_XYZ2BGR);
 
+	//conversion color pollution pair to BGR
 	cvtColor(color_fusion_pair_1,color_fusion_pair_1,COLOR_XYZ2BGR);
 	cvtColor(color_fusion_pair_2,color_fusion_pair_2,COLOR_XYZ2BGR);
-
-
-	namedWindow( "FusionPair + Delta", WINDOW_AUTOSIZE );// Create a window for display.
-	//imshow( "FusionPair + Delta", fusion_pair_1);
-
-	namedWindow( "FusionPair - Delta", WINDOW_AUTOSIZE );// Create a window for display.
-	//imshow( "FusionPair - Delta", fusion_pair_2);
-
 
 
 	//Write images to file to be converted to video
@@ -497,4 +430,60 @@ int main(){
 
 	return (1);
 
+}
+
+float getDistanceBetweenPoints(float x1, float y1,float x2,float y2 ){
+
+	return sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+}
+
+float getAngleInRadians (float x1, float y1,float x2,float y2 ){
+
+	return atan2(y1 - y2, x1 - y2);
+}
+
+float getRandomNumberInRange(){
+	return ((float) rand()) / (float) RAND_MAX;
+}
+
+float calculateNewXPoint(float dist, float angle, float x){
+
+	return x + dist * cos(angle);
+
+}
+float calculateNewYPoint(float dist, float angle, float y){
+
+	return  y + dist * sin(angle);
+
+}
+float convertBackX(float Y, float x, float y ){
+
+	return x * ( Y*255 / y);
+
+}
+float convertBackY(float Y ){
+
+	return Y*255;
+}
+float convertBackZ(float Y, float x, float y ){
+
+	return ( 1 - x - y ) * ( Y*255 / y );
+}
+
+
+bool isInRGBRange(int x, int y){
+
+	bool range = false;
+
+	float alpha = ((blueY - redY)*(x - redX) + (redX - blueX)*(y - redY)) /((blueY - redY)*(greenX - redX) + (redX - blueX)*(greenY - redY));
+	float beta = ((redY - greenY)*(x - redX) + (greenX - redX)*(y - redY)) /((blueY - redY)*(blueX - redX) + (redX - blueX)*(greenY - redY));
+	float gamma = 1.0f - alpha - beta;
+
+
+	if (alpha > 0 && beta > 0 && gamma > 0){
+
+		range = true;
+	}
+
+	return range;
 }
